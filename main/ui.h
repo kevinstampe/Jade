@@ -4,6 +4,16 @@
 #include "assets.h"
 #include "gui.h"
 
+// Portrait QR screens reserve three 14px caption lines and a 30px button row.
+// Share the QR bounds with the encoders so integer scaling leaves a quiet zone.
+#define UI_QR_PORTRAIT (CONFIG_DISPLAY_HEIGHT > CONFIG_DISPLAY_WIDTH)
+#define UI_QR_FOOTER_HEIGHT 72
+#define UI_QR_PORTRAIT_SIZE                                                                                         \
+    ((CONFIG_DISPLAY_WIDTH < CONFIG_DISPLAY_HEIGHT - UI_QR_FOOTER_HEIGHT)                                           \
+            ? CONFIG_DISPLAY_WIDTH                                                                                \
+            : CONFIG_DISPLAY_HEIGHT - UI_QR_FOOTER_HEIGHT)
+#define UI_QR_PORTRAIT_SCALE(version) (UI_QR_PORTRAIT_SIZE / (17 + 4 * (version) + 8))
+
 struct wally_tx;
 
 // Maximum length of message which can be fully displayed on

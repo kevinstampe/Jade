@@ -730,11 +730,15 @@ static bool auth_qr_mode_ex(const bool suppress_pin_change_confirmation)
     }
 
     // Otherwise user to confirm pinserver-via-QRs
+#if UI_QR_PORTRAIT
+    const char* message[] = { "Visit blkstrm.com/pn", keychain_has_pin() ? "to unlock" : "to secure" };
+#else
     char buf[16];
     const int ret = snprintf(buf, sizeof(buf), "pn to %s", keychain_has_pin() ? "unlock" : "secure");
     JADE_ASSERT(ret > 0 && ret < sizeof(buf));
     const char* message[] = { "Visit", "blkstrm.com/", buf };
-    if (!await_qr_back_continue_activity(message, 3, "blkstrm.com/pn", true)) {
+#endif
+    if (!await_qr_back_continue_activity(message, sizeof(message) / sizeof(message[0]), "blkstrm.com/pn", true)) {
         // User decided against it
         return false;
     }

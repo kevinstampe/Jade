@@ -15,6 +15,52 @@ static void make_qrcode(gui_view_node_t* parent, Icon* icons, const size_t num_i
     gui_set_icon_to_qr(icon);
 }
 
+#if UI_QR_PORTRAIT
+static gui_activity_t* make_portrait_qr_activity(const char* message[], const size_t message_size, Icon* icons,
+    const size_t num_icons, const size_t frames_per_qr_icon, const uint32_t back_event, const char* action_text,
+    const uint32_t action_event, const bool select_action)
+{
+    JADE_ASSERT(message && message_size && message_size <= 3);
+    gui_activity_t* const act = gui_make_activity();
+    gui_view_node_t* rows;
+    gui_make_vsplit(&rows, GUI_SPLIT_ABSOLUTE, 3, UI_QR_PORTRAIT_SIZE,
+        CONFIG_DISPLAY_HEIGHT - UI_QR_PORTRAIT_SIZE - 30, 30);
+    gui_set_parent(rows, act->root_node);
+
+    // The encoder leaves four modules of background on every side of the QR.
+    make_qrcode(rows, icons, num_icons, frames_per_qr_icon);
+
+    gui_view_node_t* const captions = make_even_split(UI_COLUMN, message_size);
+    gui_set_parent(captions, rows);
+    for (size_t i = 0; i < message_size; ++i) {
+        gui_view_node_t* text;
+        gui_make_text_font(&text, message[i], TFT_WHITE, DEFAULT_FONT);
+        gui_set_align(text, GUI_ALIGN_CENTER, GUI_ALIGN_MIDDLE);
+        gui_set_parent(text, captions);
+        gui_set_text_scroll(text, TFT_BLACK);
+    }
+
+    // Completing an exported QR advances the flow (notably PIN step 1 -> 2).
+    const bool continue_button = back_event == BTN_QR_DISPLAY_EXIT;
+    gui_view_node_t* buttons;
+    gui_make_hsplit(&buttons, GUI_SPLIT_ABSOLUTE, 3, 40, CONFIG_DISPLAY_WIDTH - 80, 40);
+    gui_set_parent(buttons, rows);
+    btn_data_t btns[] = {
+        { .txt = continue_button ? "S" : "=",
+            .font = continue_button ? VARIOUS_SYMBOLS_FONT : JADE_SYMBOLS_16x16_FONT,
+            .ev_id = back_event,
+            .borders = GUI_BORDER_ALL },
+        { .txt = action_text, .font = GUI_DEFAULT_FONT, .ev_id = action_event, .borders = GUI_BORDER_ALL },
+        { .txt = "P", .font = JADE_SYMBOLS_16x16_FONT, .ev_id = BTN_QR_BRIGHTNESS, .borders = GUI_BORDER_ALL },
+    };
+    for (size_t i = 0; i < sizeof(btns) / sizeof(btns[0]); ++i) {
+        add_button(buttons, btns + i);
+    }
+    gui_set_activity_initial_selection(select_action ? btns[1].btn : btns[0].btn);
+    return act;
+}
+#endif
+
 static gui_view_node_t* make_back_brightness_row(gui_view_node_t* parent, uint32_t back_ev_id)
 {
     // Create a row with left back arrow and right brightness button
@@ -42,6 +88,12 @@ gui_activity_t* make_show_xpub_qr_activity(
     JADE_ASSERT(pathstr);
     JADE_ASSERT(icons);
     JADE_ASSERT(num_icons);
+
+#if UI_QR_PORTRAIT
+    const char* message[] = { label, pathstr };
+    return make_portrait_qr_activity(message, 2, icons, num_icons, frames_per_qr_icon, BTN_XPUB_EXIT, "Options",
+        BTN_XPUB_OPTIONS, false);
+#endif
 
     gui_activity_t* const act = gui_make_activity();
     gui_view_node_t* node;
@@ -231,6 +283,12 @@ gui_activity_t* make_show_otp_qr_actvity(const char* otp_name, Icon* qr_icon)
     JADE_ASSERT(otp_name);
     JADE_ASSERT(qr_icon);
 
+#if UI_QR_PORTRAIT
+    const char* message[] = { otp_name, "Scan Secret Key" };
+    return make_portrait_qr_activity(
+        message, 2, qr_icon, 1, 0, BTN_BACK, "View Secret", BTN_OTP_DETAILS_SECRET, false);
+#endif
+
     gui_activity_t* const act = gui_make_activity();
     gui_view_node_t* node;
 
@@ -281,6 +339,12 @@ gui_activity_t* make_show_qr_activity(const char* message[], const size_t messag
     JADE_ASSERT(icons);
     JADE_ASSERT(num_icons);
     JADE_ASSERT(frames_per_qr_icon || num_icons == 1);
+
+#if UI_QR_PORTRAIT
+    return make_portrait_qr_activity(message, message_size, icons, num_icons, frames_per_qr_icon,
+        BTN_QR_DISPLAY_EXIT, show_options_button ? "Options" : NULL,
+        show_options_button ? BTN_QR_OPTIONS : GUI_BUTTON_EVENT_NONE, false);
+#endif
 
     gui_activity_t* const act = gui_make_activity();
 
@@ -337,6 +401,11 @@ gui_activity_t* make_show_qr_help_activity(const char* url, Icon* qr_icon)
 {
     JADE_ASSERT(url);
     JADE_ASSERT(qr_icon);
+
+#if UI_QR_PORTRAIT
+    const char* message[] = { "Learn more:", url };
+    return make_portrait_qr_activity(message, 2, qr_icon, 1, 0, BTN_QR_HELP_EXIT, NULL, GUI_BUTTON_EVENT_NONE, false);
+#endif
 
 #if CONFIG_DISPLAY_WIDTH >= 480 && CONFIG_DISPLAY_HEIGHT >= 220
     const size_t lpad = 12;
@@ -401,8 +470,13 @@ gui_activity_t* make_qr_back_continue_activity(
     const char* message[], const size_t message_size, const char* url, Icon* qr_icon, const bool default_selection)
 {
     JADE_ASSERT(message);
-    JADE_ASSERT(message_size == 3);
     JADE_ASSERT(qr_icon);
+
+#if UI_QR_PORTRAIT
+    return make_portrait_qr_activity(
+        message, message_size, qr_icon, 1, 0, BTN_NO, "Continue", BTN_YES, default_selection);
+#endif
+    JADE_ASSERT(message_size == 3);
 
 #if CONFIG_DISPLAY_WIDTH >= 480 && CONFIG_DISPLAY_HEIGHT >= 220
     const size_t vpad = 3;

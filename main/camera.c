@@ -48,8 +48,7 @@ static volatile bool camera_task_running = false;
 #define CAM_MIN(a, b) (a < b ? a : b)
 #define CAM_MAX(a, b) (a > b ? a : b)
 
-// The image from the camera framebuffer is scaled and cropped to fit the display image
-// (Based on Jade screen dimensions and the fact that the image is half the screen.)
+// The image from the camera framebuffer is scaled and cropped to fit the preview.
 
 // Width and height of camera image aligned to screen orientation
 #if defined(CONFIG_CAMERA_ROTATE_90) || (CONFIG_CAMERA_ROTATE_270)
@@ -62,17 +61,28 @@ static volatile bool camera_task_running = false;
 #define UI_CAMERA_IMAGE_HEIGHT CAMERA_IMAGE_HEIGHT
 #endif
 
-// Screen area used to display camera image - full screen
+// Portrait preview shows the same central square as the QR decoder.
+#if CONFIG_DISPLAY_HEIGHT > CONFIG_DISPLAY_WIDTH
+#define UI_DISPLAY_WIDTH CAM_MIN(CONFIG_DISPLAY_WIDTH, CAMERA_SCAN_SIZE)
+#define UI_DISPLAY_HEIGHT UI_DISPLAY_WIDTH
+#else
 #define UI_DISPLAY_WIDTH (CONFIG_DISPLAY_WIDTH * 70 / 100) // 70% of screen width
 #define UI_DISPLAY_HEIGHT CONFIG_DISPLAY_HEIGHT
+#endif
 
-// Scale down if image much larger than screen area in both dimensions
-// The numerator is fixed at 2, allowing half-integer scaling
+// Portrait scaling maps the entire decoder square to the preview.
+#if CONFIG_DISPLAY_HEIGHT > CONFIG_DISPLAY_WIDTH
+#define SCALE_NUMERATOR UI_DISPLAY_WIDTH
+#define SCALE_DENOMINATOR CAMERA_SCAN_SIZE
+#else
+// Scale down if image much larger than screen area in both dimensions.
+// The numerator is fixed at 2, allowing half-integer scaling.
 #define SCALE_NUMERATOR 2
 #define CALC_SCALE_DENOMINATOR(img, ui) CAM_MAX(SCALE_NUMERATOR, (((SCALE_NUMERATOR * img) + (ui / 2)) / ui))
 #define SCALE_DENOMINATOR                                                                                              \
     CAM_MIN(CALC_SCALE_DENOMINATOR(UI_CAMERA_IMAGE_WIDTH, UI_DISPLAY_WIDTH),                                           \
         CALC_SCALE_DENOMINATOR(UI_CAMERA_IMAGE_HEIGHT, UI_DISPLAY_HEIGHT))
+#endif
 #define CAM2UI(x) ((x * SCALE_NUMERATOR) / SCALE_DENOMINATOR)
 #define UI2CAM(x) ((x * SCALE_DENOMINATOR) / SCALE_NUMERATOR)
 
@@ -177,7 +187,8 @@ static void copy_camera_image_180(
 void await_qr_help_activity(const char* url);
 
 gui_activity_t* make_camera_activity(gui_view_node_t** image_node, gui_view_node_t** label_node, bool show_click_btn,
-    qr_guide_type_t qr_guide_type, progress_bar_t* progress_bar, bool show_help_btn);
+    qr_guide_type_t qr_guide_type, progress_bar_t* progress_bar, bool show_help_btn, uint16_t preview_width,
+    uint16_t preview_height);
 
 // Camera-task config data
 typedef struct {
@@ -412,7 +423,8 @@ static void jade_camera_task(void* data)
     if (camera_config->show_ui) {
         // Create camera screen
         act = make_camera_activity(&image_node, &label_node, camera_config->show_click_button,
-            camera_config->qr_guide_type, camera_config->progress_bar, camera_config->help_url);
+            camera_config->qr_guide_type, camera_config->progress_bar, camera_config->help_url, DISPLAY_IMAGE_WIDTH,
+            DISPLAY_IMAGE_HEIGHT);
         camera_config->camera_act = act;
         gui_set_current_activity(act);
     }

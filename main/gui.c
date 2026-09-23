@@ -2849,7 +2849,7 @@ void gui_set_activity_title(gui_activity_t* activity, const char* title)
 
 gui_activity_t* gui_current_activity(void) { return current_activity; }
 
-#ifdef CONFIG_BOARD_TYPE_JADE_ANY
+#if defined(CONFIG_BOARD_TYPE_JADE_ANY) || defined(CONFIG_BOARD_TYPE_WS_TOUCH_LCD2)
 extern const uint8_t splashstart[] asm("_binary_splash_bin_gz_start");
 extern const uint8_t splashend[] asm("_binary_splash_bin_gz_end");
 #endif
@@ -2861,7 +2861,7 @@ gui_activity_t* gui_display_splash(void)
 
     // Blank screen while awaiting attestation data upload
     if (!gui_awaiting_attestation_data()) {
-#ifdef CONFIG_BOARD_TYPE_JADE_ANY
+#if defined(CONFIG_BOARD_TYPE_JADE_ANY) || defined(CONFIG_BOARD_TYPE_WS_TOUCH_LCD2)
         Picture* const pic = get_picture(splashstart, splashend);
         gui_make_picture(&splash_node, pic);
 #else

@@ -40,12 +40,14 @@ static const uint32_t QR_ALPHANUMERIC_CAPACITY[] = { 0, 25, 47, 77, 114, 154, 19
 // Index is QR 'version' (ie size), value is the scale factor
 // used to get an image as large as sensibly fits the Jade screen.
 // NOTE: we can scale up more on larger screens
+#if !UI_QR_PORTRAIT
 #if CONFIG_DISPLAY_WIDTH >= 480 && CONFIG_DISPLAY_HEIGHT >= 220
 static const uint32_t QR_SCALE_FACTOR[] = { 0, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3 };
 #elif CONFIG_DISPLAY_WIDTH >= 320 && CONFIG_DISPLAY_HEIGHT >= 170
 static const uint32_t QR_SCALE_FACTOR[] = { 0, 8, 6, 5, 5, 4, 4, 3, 3, 3, 2, 2, 2 };
 #else
 static const uint32_t QR_SCALE_FACTOR[] = { 0, 6, 5, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2 };
+#endif
 #endif
 
 // NOTE: educated-guesswork/reverse-engineered - pass this value into bcur encoder
@@ -768,7 +770,11 @@ void bcur_create_qr_icons(const uint8_t* payload, const size_t len, const char* 
         urfree_encoded_encoder(fragment);
 
         // Convert fragment to Icon
+#if UI_QR_PORTRAIT
+        qrcode_toIcon(&qrcode, qr_icons + ifrag, UI_QR_PORTRAIT_SCALE(qr_version));
+#else
         qrcode_toIcon(&qrcode, qr_icons + ifrag, QR_SCALE_FACTOR[qr_version]);
+#endif
     }
     JADE_ASSERT(uris_complete_encoder(encoder));
 

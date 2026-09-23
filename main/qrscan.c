@@ -10,8 +10,6 @@
 #include "utils/malloc_ext.h"
 #include "utils/util.h"
 
-#define SCAN_MARGIN 20
-
 // Inspect qrcodes and try to extract payload - whether any were seen and any
 // string data extracted are stored in the qr_data struct passed.
 static bool qr_extract_payload(qr_data_t* qr_data)
@@ -130,7 +128,7 @@ bool scan_qr(const size_t width, const size_t height, const uint8_t* data, const
     JADE_ASSERT(qr_data->q);
 
     // Also correctly size the internal image buffer since we know the size of the camera images.
-    const uint16_t scan_width = min_u16(CAMERA_IMAGE_WIDTH, CAMERA_IMAGE_HEIGHT) - SCAN_MARGIN;
+    const uint16_t scan_width = CAMERA_SCAN_SIZE;
     const int qret = quirc_resize(qr_data->q, scan_width, scan_width);
     JADE_ASSERT(qret == 0);
     qr_data->len = 0;
@@ -177,7 +175,7 @@ bool jade_camera_scan_qr(
 
     // Also correctly size the internal image buffer since we know the size of the camera images.
     // This image buffer is then reused for every camera image frame processed.
-    const uint16_t scan_width = min_u16(CAMERA_IMAGE_WIDTH, CAMERA_IMAGE_HEIGHT) - SCAN_MARGIN;
+    const uint16_t scan_width = CAMERA_SCAN_SIZE;
     const int qret = quirc_resize(qr_data->q, scan_width, scan_width);
     JADE_ASSERT(qret == 0);
     qr_data->len = 0;

@@ -13,6 +13,11 @@
 #define CAMERA_IMAGE_WIDTH 320
 #define CAMERA_IMAGE_HEIGHT 240
 
+// The decoder and portrait preview use the same central square of the frame.
+#define CAMERA_SCAN_MARGIN 20
+#define CAMERA_SCAN_SIZE                                                                                           \
+    ((CAMERA_IMAGE_WIDTH < CAMERA_IMAGE_HEIGHT ? CAMERA_IMAGE_WIDTH : CAMERA_IMAGE_HEIGHT) - CAMERA_SCAN_MARGIN)
+
 // Function to process images from the camera.
 // Should return false if processing incomplete (and so should be called again with the next frame)
 // Should return true when processing complete (and the image capture loop/task should exit)

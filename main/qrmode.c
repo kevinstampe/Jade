@@ -1120,8 +1120,13 @@ static bool parse_sign_display_bcur_psbt_qr(const uint8_t* cbor, const size_t cb
     }
 
     // Now display bcur QR
+#if UI_QR_PORTRAIT
+    const char* message[] = { "Scan with", "wallet app" };
+#else
     const char* message[] = { "Scan with", "wallet", "app" };
-    display_bcur_qr(message, 3, BCUR_TYPE_CRYPTO_PSBT, cbor_signed, cbor_signed_len, "blkstrm.com/psbt");
+#endif
+    display_bcur_qr(message, sizeof(message) / sizeof(message[0]), BCUR_TYPE_CRYPTO_PSBT, cbor_signed,
+        cbor_signed_len, "blkstrm.com/psbt");
     ret = true;
 
 cleanup:
@@ -1132,8 +1137,13 @@ cleanup:
 void show_bip85_bip39_entropy_qr(const uint8_t* cbor, const size_t cbor_len)
 {
     JADE_ASSERT(cbor && cbor_len);
+#if UI_QR_PORTRAIT
+    const char* message[] = { "Scan with", "wallet app" };
+#else
     const char* message[] = { "Scan with", "wallet", "app" };
-    display_bcur_qr(message, 3, BCUR_TYPE_JADE_BIP8539_REPLY, cbor, cbor_len, "blkstrm.com/bip85");
+#endif
+    display_bcur_qr(message, sizeof(message) / sizeof(message[0]), BCUR_TYPE_JADE_BIP8539_REPLY, cbor, cbor_len,
+        "blkstrm.com/bip85");
 }
 
 // Returns false if an error occured or the user cancelled the action
@@ -1338,7 +1348,9 @@ static void bytes_to_qr_icon(const uint8_t* bytes, const size_t bytes_len, Icon*
     // Create icon for url
     // For sizes, see: https://www.qrcode.com/en/about/version.html - 'Binary'
     const uint8_t qr_version = bytes_len < MAX_QR_V2_DATA_LEN ? 2 : bytes_len < MAX_QR_V4_DATA_LEN ? 4 : 6;
-#if CONFIG_DISPLAY_WIDTH >= 480 && CONFIG_DISPLAY_HEIGHT >= 220
+#if UI_QR_PORTRAIT
+    const uint8_t scale_factor = UI_QR_PORTRAIT_SCALE(qr_version);
+#elif CONFIG_DISPLAY_WIDTH >= 480 && CONFIG_DISPLAY_HEIGHT >= 220
     const uint8_t scale_factor = (qr_version == 2 ? 7 : qr_version == 4 ? 6 : 5);
 #elif CONFIG_DISPLAY_WIDTH >= 320 && CONFIG_DISPLAY_HEIGHT >= 170
     const uint8_t scale_factor = (qr_version == 2 ? 5 : qr_version == 4 ? 4 : 4);
@@ -1543,7 +1555,12 @@ void await_qr_help_activity(const char* url)
 
     // Put an explicit \n before the last part of the url
     char url_with_crlf[MAX_QR_V4_DATA_LEN + 2]; // new \n and trailing \0
+#if UI_QR_PORTRAIT
+    // Full-width portrait captions scroll on one line.
+    snprintf(url_with_crlf, sizeof(url_with_crlf), "%s", url);
+#else
     add_cr_after_last_slash(url, url_with_crlf, sizeof(url_with_crlf));
+#endif
 
     gui_activity_t* const prev_act = gui_current_activity(); // Save current activity
 
@@ -1758,8 +1775,13 @@ cleanup:
 
 static bool handle_jade_reply_pinserver_request(const uint8_t* msg, const size_t len, void* ctx)
 {
+#if UI_QR_PORTRAIT
+    const char* message[] = { "Step 1/2", "Scan Jade QR" };
+#else
     const char* message[] = { "Step 1/2", "Scan Jade", "QR" };
-    return handle_jade_reply_http_request_show_qr(message, 3, msg, len, ctx, "blkstrm.com/qrpin");
+#endif
+    return handle_jade_reply_http_request_show_qr(
+        message, sizeof(message) / sizeof(message[0]), msg, len, ctx, "blkstrm.com/qrpin");
 }
 
 static bool handle_outbound_reply(outbound_message_writer_fn_t handler)
