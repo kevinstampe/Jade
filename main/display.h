@@ -92,6 +92,7 @@ extern const color_t TFT_PINK;
 
 void display_init(TaskHandle_t* gui_h);
 bool display_flip_orientation(bool flipped_orientation);
+void display_sleep(void);
 
 #if defined(CONFIG_BOARD_TYPE_TTGO_TWATCHS3) || defined(CONFIG_BOARD_TYPE_M5_CORES3)                                   \
     || defined(CONFIG_BOARD_TYPE_WS_TOUCH_LCD2) || defined(CONFIG_BOARD_TYPE_WS_TOUCH_LCD35)

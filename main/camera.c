@@ -5,6 +5,7 @@
 #include "button_events.h"
 #include "camera.h"
 #include "idletimer.h"
+#include "input.h"
 #include "jade_assert.h"
 #include "jade_tasks.h"
 #include "power.h"
@@ -13,11 +14,6 @@
 #include "ui.h"
 #include "utils/event.h"
 #include "utils/malloc_ext.h"
-
-#if defined(CONFIG_DISPLAY_TOUCHSCREEN)
-void touchscreen_init(void);
-void touchscreen_deinit(void);
-#endif
 
 #ifdef CONFIG_DEBUG_MODE
 // Debug/testing function to cache an image - the next time the camera is called

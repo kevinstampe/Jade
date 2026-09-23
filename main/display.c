@@ -313,6 +313,13 @@ bool display_flip_orientation(const bool flipped_orientation)
 #endif
 }
 
+void display_sleep(void)
+{
+#ifndef CONFIG_ETH_USE_OPENETH
+    display_hw_sleep();
+#endif
+}
+
 typedef struct {
     Icon* icon;
     Picture* pic;

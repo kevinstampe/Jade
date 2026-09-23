@@ -414,4 +414,24 @@ void display_hw_flush(void)
 #endif
 }
 #endif // FRAME BUFFER
+
+// Put the panel into its lowest-power state (display off + sleep-in).
+// Best-effort: this is only called on the way into deep sleep, so a failure
+// here must not abort - it would reboot the device instead of sleeping it.
+void display_hw_sleep(void)
+{
+#if defined(ESP_PLATFORM) && !defined(CONFIG_LIBJADE)
+    if (!ph) {
+        return;
+    }
+    const esp_err_t off_rc = esp_lcd_panel_disp_on_off(ph, false);
+    if (off_rc != ESP_OK) {
+        JADE_LOGW("esp_lcd_panel_disp_on_off() failed: %u", off_rc);
+    }
+    const esp_err_t sleep_rc = esp_lcd_panel_disp_sleep(ph, true);
+    if (sleep_rc != ESP_OK) {
+        JADE_LOGW("esp_lcd_panel_disp_sleep() failed: %u", sleep_rc);
+    }
+#endif
+}
 #endif // AMALGAMATED_BUILD
